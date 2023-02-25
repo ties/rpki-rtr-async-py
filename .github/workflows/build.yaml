@@ -1,0 +1,38 @@
+---
+name: Build
+on: [push]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'poetry'
+      - run: poetry install
+      - run: poetry run pre-commit run --all-files
+
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'poetry'
+      - run: poetry install
+      - run: poetry run pytest --junitxml=/tmp/report.xml
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v3
+        # always run even if the previous step fails
+        if: success() || failure()
+        with:
+          report_paths: '/tmp/report.xml'
